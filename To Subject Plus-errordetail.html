@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LINE Typing Test</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: #b7d7e8;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .start-screen {
+    width: 100vw;
+    max-width: 390px;
+    height: 100dvh;
+    margin: 0 auto;
+    background: #8db4c9;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .start-box {
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .start-box h2 { margin-top: 0; }
+
+  .start-box input {
+    width: 90%;
+    font-size: 22px;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .phone {
+    width: 100vw;
+    max-width: 390px;
+    height: 100dvh;
+    margin: 0 auto;
+    background: #8db4c9;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .header {
+    background: #06c755;
+    color: white;
+    padding: 12px 14px;
+    font-size: 20px;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .info {
+    background: #e8f5e9;
+    padding: 8px 14px;
+    font-size: 15px;
+    line-height: 1.4;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+
+  .chat {
+    flex: 1;
+    padding: 14px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bubble {
+    background: white;
+    padding: 12px 14px;
+    border-radius: 16px;
+    max-width: 82%;
+    font-size: 18px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  #target { align-self: flex-start; }
+
+  .result-bubble {
+    align-self: flex-end;
+    margin-left: auto;
+  }
+
+  .result-bubble.is-correct { background: #dcf8c6; }
+  .result-bubble.is-wrong { background: #ffd6d6; }
+
+  .input-area {
+    display: flex;
+    align-items: center;
+    background: #f5f5f5;
+    padding: 10px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    min-width: 0;
+  }
+
+  button {
+    font-size: 18px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 18px;
+    background: #06c755;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .correct { color: green; }
+  .wrong { color: red; background: #ffd6d6; font-weight: bold; }
+  .yellow { background: yellow; color: black; font-weight: bold; }
+
+  .result-screen {
+    width: 100vw;
+    max-width: 1100px;
+    height: 100dvh;
+    margin: 0 auto;
+    background: #eef5f7;
+    display: none;
+    flex-direction: column;
+    overflow: auto;
+    padding: 16px;
+  }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .result-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .result-controls select {
+    font-size: 16px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    background: white;
+  }
+
+  .result-summary {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+    line-height: 1.6;
+  }
+
+  .tablebox {
+    overflow: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+  }
+
+  #resultTable {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 900px;
+  }
+
+  #resultTable th,
+  #resultTable td {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+    vertical-align: top;
+  }
+
+  #resultTable th {
+    background: #e8f5e9;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  #resultTable td:nth-child(6) {
+    min-width: 420px;
+    white-space: normal;
+  }
+
+  .danger { background: #d9534f; }
+  .small-note { color: #555; font-size: 13px; line-height: 1.5; }
+  .top-result-btn { margin-left: auto; background: #04a645; font-size: 14px; padding: 6px 10px; }
+
+
+  /* ===== 完成紀錄管理頁 ===== */
+  .progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .progress-card {
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .manual-box {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+  }
+
+  .manual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    align-items: end;
+  }
+
+  .manual-grid label {
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .manual-grid input,
+  .manual-grid select {
+    width: 100%;
+    font-size: 15px;
+    padding: 7px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+  }
+
+  .edit-input {
+    width: 120px;
+    font-size: 14px;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+  }
+
+  .edit-datetime {
+    width: 180px;
+  }
+
+  .row-actions button {
+    margin: 2px;
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .secondary { background: #4e89ae; }
+
+  #resultTable {
+    min-width: 1000px;
+  }
+
+  #resultTable td:nth-child(6),
+  #resultTable td:nth-child(7) {
+    min-width: 300px;
+    white-space: normal;
+  }
+
+
+  .progress-card { cursor: pointer; transition: transform .08s ease, box-shadow .08s ease; }
+  .progress-card:active { transform: scale(.98); }
+  .progress-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.14); }
+  .detail-screen {
+    width: 100vw;
+    max-width: 1100px;
+    height: 100dvh;
+    margin: 0 auto;
+    background: #eef5f7;
+    display: none;
+    flex-direction: column;
+    overflow: auto;
+    padding: 16px;
+  }
+  .detail-title { margin: 0; }
+  .detail-top {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+    line-height: 1.6;
+  }
+  #participantDetailTable {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 980px;
+  }
+  #participantDetailTable th,
+  #participantDetailTable td {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+    vertical-align: top;
+  }
+  #participantDetailTable th {
+    background: #e8f5e9;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  #participantDetailTable td:nth-child(6) {
+    min-width: 360px;
+    white-space: normal;
+  }
+  .status-done { color: #087f23; font-weight: bold; }
+  .status-pending { color: #777; font-weight: bold; }
+  .sync-banner {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: none;
+  }
+  .sync-ok { background: #dcf8c6; color: #145214; }
+  .sync-err { background: #ffe1b3; color: #7a4a00; }
+  .sync-loading { background: #e0e0e0; color: #444; }
+</style>
+</head>
+<body>
+
+<div class="start-screen" id="startScreen">
+  <div class="start-box">
+    <h2>Typing Test</h2>
+    <p>請輸入受試者編號</p>
+    <input id="participantInput" placeholder="例如 P01" maxlength="3">
+    <br>
+    <button onclick="startExperiment()">開始實驗</button>
+    <br><br>
+    <button onclick="showResultsPage()" type="button">查看完成紀錄</button>
+  </div>
+</div>
+
+<div class="phone" id="phoneScreen">
+  <div class="header" style="display:flex;align-items:center;gap:8px;">Typing Test <button class="top-result-btn" onclick="showResultsPage()" type="button">完成紀錄</button> <button class="top-result-btn" style="background:#4e89ae;" onclick="backToParticipantSelect()" type="button">選擇受試者</button></div>
+  <div class="info" id="trialInfo"></div>
+  <div class="chat">
+    <div class="bubble" id="target"></div>
+    <div class="bubble result-bubble" id="result" style="display:none;"></div>
+  </div>
+  <div class="input-area">
+    <input id="input" placeholder="Aa" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" enterkeyhint="send">
+    <button id="sendBtn" onclick="submitText()" type="button">送出</button>
+  </div>
+</div>
+
+
+<div class="result-screen" id="resultScreen">
+  <div class="result-header">
+    <h1 style="margin:0;">Experiment Completion Records</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="backToTypingPage()" type="button">回到打字頁</button>
+      <button class="secondary" onclick="backToParticipantSelect()" type="button">選擇受試者</button>
+    </div>
+  </div>
+
+  <div class="sync-banner" id="syncBanner"></div>
+
+  <div class="result-controls">
+    <label for="participantFilter"><b>選擇受試者：</b></label>
+    <select id="participantFilter" onchange="openSelectedParticipant()">
+      <option value="ALL">請選擇受試者</option>
+    </select>
+    <button onclick="refreshResultTable()" type="button">重新整理（從雲端同步）</button>
+    <button onclick="openCloudSheet()" type="button">開啟 Google Sheet</button>
+    <button onclick="downloadExcel()" type="button" style="background:#217346;">下載 Excel（.xlsx）</button>
+    <button class="danger" onclick="clearAllData()" type="button">清除全部紀錄</button>
+  </div>
+
+  <div class="result-summary" id="resultSummary"></div>
+  <div class="progress-grid" id="progressGrid"></div>
+
+  <p class="small-note">
+    說明：點選任一受試者卡片，即可進入該受試者的 36 句詳細紀錄頁。<br>
+    詳細頁每一句旁邊都可以新增、修改完成日期時間，或刪除該句紀錄。<br>
+    打字頁仍保留紅／黃／綠即時提示。<br>
+    每次送出正確句子後，紀錄會自動同步到 Google Sheet，電腦端只要按「重新整理」即可看到手機上的最新進度。
+  </p>
+</div>
+
+<div class="detail-screen" id="participantDetailScreen">
+  <div class="result-header">
+    <h1 class="detail-title" id="participantDetailTitle">Participant Detail</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="showResultsPage()" type="button">回完成紀錄總覽</button>
+      <button onclick="backToTypingPage()" type="button">回到打字頁</button>
+    </div>
+  </div>
+
+  <div class="detail-top" id="participantDetailSummary"></div>
+
+  <div class="tablebox">
+    <table id="participantDetailTable">
+      <thead>
+        <tr>
+          <th>Trial Order</th>
+          <th>SentenceID</th>
+          <th>狀態</th>
+          <th>完成日期時間</th>
+          <th>Final Input</th>
+          <th>Target Sentence</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <p class="small-note">
+    已完成的句子可按「儲存修改」更新完成日期時間；未完成的句子可按「新增紀錄」補登。<br>
+    「刪除此句」只會刪除該受試者該 Trial，不會影響其他句子。
+  </p>
+</div>
+
+<script>
+const sentenceBank = {
+  "S01": "Smart eager calm wave bright over green tree golden path quick road silent bird happy farm adventure",
+  "S02": "Bright minds often discover useful ideas when they explore nature and observe patterns every day new",
+  "S03": "Happy students build strong habits through steady practice and careful planning for future goals now",
+  "S04": "Creative people find simple ways to solve daily problems while keeping a calm and focused mindset up",
+  "S05": "Gentle rain refreshed the quiet valley as travelers shared stories beside glowing campfires together",
+  "S06": "Curious thinkers develop practical skills through daily effort and consistent learning each week now",
+  "S07": "Dedicated workers improve complex tasks through patient practice and careful review every day always",
+  "S08": "Friendly neighbors create lasting bonds by sharing helpful moments during quiet evenings together up",
+  "S09": "Talented artists transform ordinary scenes into vibrant images with patience and imagination greatly",
+  "S10": "Motivated students explore challenging topics with curiosity and build knowledge through teamwork on",
+  "S11": "Hope everything went smoothly for you and your team after work today have fun and rest tonight early",
+  "S12": "Thank you for helping me finish everything earlier now we can finally relax and enjoy dinner outside",
+  "S13": "Everyone enjoyed sharing fresh ideas during dinner because teamwork made each challenge easier ahead",
+  "S14": "Can we meet after class tomorrow and talk about the project while getting coffee downtown soons pals",
+  "S15": "I was thinking about trying that new restaurant because everyone says the food is really good todays",
+  "S16": "Honest leaders inspire public trust within modern societies through clear communication and hope now",
+  "S17": "Every morning the bakery opens early and welcomes regular customers with fresh bread and smiles days",
+  "S18": "Creative chefs prepare delicious meals using fresh local herbs within beautiful modern kitchens soon",
+  "S19": "Young athletes train consistently throughout the year to achieve personal goals and stronger results",
+  "S20": "Several friends planned a weekend picnic beside the river and enjoyed music games and snacks outside",
+  "S21": "Experienced gardeners carefully water growing plants each morning to keep flowers healthy and bright",
+  "S22": "Many families enjoy spending quiet evenings together while sharing stories and planning future trips",
+  "S23": "Busy parents prepare healthy meals every evening while supporting children through daily routines us",
+  "S24": "People often learn faster when short practice sessions build skill through repeated actions each day",
+  "S25": "Mobile devices support quick communication and help friends share ideas across long distances widely",
+  "S26": "Her sons always enjoy reading historical novels about ancient civilizations and their hidden secrets",
+  "S27": "Morning walks help me clear my mind before work and keep my energy steady through the whole day well",
+  "S28": "Having dinner with friends after a busy day always makes me feel relaxed and ready for tomorrow soon",
+  "S29": "Many students from different countries join the online program to improve their speaking skills fast",
+  "S30": "Walking through the quiet forest in the early morning helps clear my mind and reduce my daily stress",
+  "S31": "Many people prefer quiet evenings at home where relaxing music creates a calm and pleasant mood once",
+  "S32": "Several neighbors enjoy evening chats near the park and exchange helpful ideas about daily life well",
+  "S33": "Friends often share funny stories during dinners and laugh together about unexpected moments at work",
+  "S34": "Sometimes a quiet cup of tea and a good book can make the whole afternoon feel much better right now",
+  "S35": "Learning a new language requires consistent practice every day even if you only have fifteen minutes",
+  "S36": "Modern teams achieve better results when members communicate openly and support each other regularly"
+};
+
+const assignment = {
+  "P01":["S08","S10","S30","S26","S16","S04","S01","S12","S35","S09","S23","S13","S17","S34","S06","S24","S18","S07","S27","S31","S36","S28","S22","S21","S25","S05","S15","S02","S11","S03","S19","S20","S33","S29","S32","S14"],
+  "P02":["S03","S12","S36","S33","S08","S14","S21","S27","S01","S02","S09","S13","S30","S20","S31","S25","S32","S34","S15","S06","S24","S19","S07","S17","S11","S10","S05","S23","S29","S16","S18","S22","S28","S04","S35","S26"],
+  "P03":["S14","S19","S05","S17","S33","S11","S35","S32","S01","S29","S30","S22","S25","S21","S36","S08","S16","S20","S27","S02","S07","S31","S09","S15","S13","S12","S06","S18","S26","S24","S04","S10","S03","S28","S34","S23"],
+  "P04":["S08","S09","S30","S35","S27","S18","S01","S06","S33","S12","S24","S02","S17","S31","S04","S29","S14","S36","S23","S11","S05","S28","S16","S07","S13","S15","S20","S10","S34","S21","S03","S25","S26","S19","S22","S32"],
+  "P05":["S30","S32","S07","S14","S34","S24","S28","S21","S12","S35","S16","S23","S27","S17","S18","S33","S15","S05","S36","S04","S20","S26","S31","S01","S09","S29","S03","S11","S19","S08","S13","S10","S25","S02","S22","S06"],
+  "P06":["S09","S19","S04","S16","S33","S27","S29","S24","S17","S21","S26","S01","S28","S35","S25","S11","S07","S34","S03","S13","S32","S22","S18","S02","S14","S20","S23","S12","S10","S06","S31","S30","S36","S08","S05","S15"],
+  "P07":["S08","S36","S07","S34","S02","S03","S35","S23","S11","S19","S27","S30","S04","S33","S22","S10","S12","S16","S18","S20","S26","S17","S28","S24","S21","S05","S25","S01","S29","S13","S09","S15","S06","S31","S14","S32"],
+  "P08":["S31","S07","S28","S18","S02","S25","S05","S24","S21","S29","S08","S19","S14","S13","S36","S06","S35","S34","S11","S33","S30","S22","S20","S16","S01","S03","S17","S23","S32","S04","S10","S15","S12","S26","S27","S09"],
+  "P09":["S08","S12","S17","S31","S28","S36","S03","S09","S19","S02","S11","S01","S16","S10","S30","S18","S35","S14","S25","S05","S26","S33","S24","S22","S04","S15","S06","S21","S29","S27","S07","S34","S23","S20","S32","S13"],
+  "P10":["S10","S06","S33","S15","S30","S13","S08","S24","S25","S09","S05","S32","S01","S19","S21","S07","S22","S23","S28","S34","S02","S29","S18","S11","S27","S16","S12","S31","S03","S36","S17","S35","S20","S14","S04","S26"],
+  "P11":["S33","S34","S28","S06","S27","S26","S09","S31","S16","S35","S14","S02","S23","S30","S25","S15","S04","S36","S18","S11","S29","S08","S17","S13","S19","S21","S22","S05","S10","S01","S20","S12","S32","S24","S07","S03"],
+  "P12":["S20","S36","S28","S31","S06","S35","S13","S15","S01","S34","S26","S10","S07","S12","S23","S11","S27","S29","S19","S32","S30","S03","S22","S16","S17","S02","S21","S08","S24","S14","S33","S05","S18","S04","S09","S25"],
+  "P13":["S03","S05","S25","S27","S26","S31","S08","S04","S14","S15","S24","S22","S35","S30","S16","S32","S13","S10","S11","S12","S34","S28","S36","S01","S18","S09","S20","S29","S17","S23","S21","S33","S07","S19","S02","S06"],
+  "P14":["S25","S11","S05","S30","S04","S02","S31","S06","S24","S14","S27","S20","S26","S21","S22","S08","S18","S23","S34","S10","S01","S15","S03","S36","S07","S13","S29","S09","S12","S16","S28","S33","S35","S32","S17","S19"],
+  "P15":["S32","S31","S27","S09","S08","S17","S07","S34","S13","S10","S04","S24","S20","S05","S01","S14","S28","S19","S33","S06","S22","S29","S02","S03","S25","S12","S35","S16","S23","S21","S11","S15","S30","S36","S18","S26"],
+  "P16":["S05","S24","S32","S26","S12","S23","S02","S03","S08","S21","S31","S20","S35","S11","S01","S16","S36","S10","S27","S22","S34","S29","S09","S06","S30","S17","S13","S04","S18","S19","S14","S07","S25","S28","S15","S33"],
+  "P17":["S31","S28","S12","S09","S24","S34","S08","S35","S30","S27","S11","S33","S20","S21","S14","S10","S23","S19","S18","S06","S32","S07","S17","S01","S02","S29","S16","S36","S13","S26","S05","S25","S03","S04","S22","S15"],
+  "P18":["S29","S03","S17","S22","S06","S02","S32","S27","S09","S12","S34","S19","S14","S13","S15","S23","S20","S08","S18","S31","S10","S24","S04","S21","S01","S25","S35","S28","S36","S30","S07","S33","S05","S16","S11","S26"],
+  "P19":["S16","S24","S01","S32","S02","S05","S34","S28","S12","S17","S10","S19","S33","S09","S18","S25","S14","S03","S08","S13","S23","S30","S36","S15","S22","S06","S27","S20","S35","S11","S29","S31","S26","S04","S21","S07"],
+  "P20":["S11","S25","S09","S02","S30","S10","S12","S17","S18","S13","S34","S03","S28","S26","S32","S04","S24","S01","S08","S06","S36","S20","S23","S14","S15","S19","S22","S33","S35","S29","S27","S07","S05","S16","S21","S31"],
+  "P21":["S13","S17","S29","S11","S35","S07","S20","S01","S18","S33","S25","S08","S26","S05","S19","S24","S06","S09","S03","S31","S27","S10","S34","S23","S15","S22","S30","S04","S32","S16","S02","S12","S21","S14","S28","S36"],
+  "P22":["S17","S15","S06","S20","S05","S18","S08","S16","S35","S21","S01","S31","S24","S36","S22","S12","S30","S03","S25","S32","S28","S19","S07","S14","S09","S33","S04","S26","S13","S11","S10","S02","S34","S29","S23","S27"],
+  "P23":["S32","S36","S21","S17","S33","S05","S35","S02","S10","S16","S25","S15","S19","S34","S14","S03","S08","S09","S28","S18","S11","S26","S22","S24","S31","S20","S07","S29","S23","S13","S04","S30","S27","S12","S01","S06"],
+  "P24":["S18","S16","S11","S27","S31","S17","S08","S22","S10","S36","S03","S04","S06","S01","S05","S25","S32","S07","S09","S28","S34","S24","S26","S35","S30","S21","S12","S13","S19","S14","S23","S02","S15","S20","S29","S33"],
+  "P25":["S03","S30","S19","S23","S26","S22","S01","S10","S08","S35","S29","S32","S25","S24","S07","S13","S31","S09","S20","S12","S33","S11","S36","S02","S15","S06","S27","S04","S14","S21","S28","S17","S16","S34","S18","S05"],
+  "P26":["S08","S19","S34","S30","S27","S04","S24","S15","S31","S09","S21","S03","S32","S14","S29","S18","S23","S20","S05","S06","S13","S01","S10","S16","S36","S22","S02","S07","S35","S12","S25","S33","S11","S17","S28","S26"],
+  "P27":["S20","S15","S02","S13","S21","S19","S23","S17","S26","S18","S32","S12","S34","S36","S29","S04","S06","S14","S35","S05","S08","S30","S07","S03","S24","S11","S25","S10","S27","S31","S16","S09","S01","S28","S22","S33"],
+  "P28":["S13","S19","S04","S12","S36","S06","S25","S32","S15","S20","S14","S29","S27","S07","S31","S22","S09","S33","S28","S23","S11","S16","S24","S02","S34","S26","S05","S10","S35","S17","S18","S21","S30","S08","S03","S01"],
+  "P29":["S18","S03","S01","S34","S12","S30","S06","S28","S17","S22","S27","S26","S15","S29","S21","S05","S36","S20","S33","S31","S23","S24","S07","S09","S19","S16","S13","S35","S25","S32","S08","S02","S10","S14","S04","S11"],
+  "P30":["S05","S08","S11","S10","S24","S13","S33","S03","S28","S22","S36","S21","S34","S07","S23","S02","S17","S16","S15","S35","S31","S30","S04","S06","S26","S14","S18","S12","S25","S32","S09","S20","S19","S27","S01","S29"]
+};
+
+let participantID = "";
+let trialList = [];
+let currentTrialIndex = 0;
+let currentSentence = "";
+let currentSentenceID = "";
+
+let trialStartTime = null;
+let trialEndTime = null;
+let keystrokeCount = 0;
+let backspaceCount = 0;
+let keyLog = [];
+let lastInputTime = null;
+let completionTime = null;
+const STORAGE_KEY = "typingTestRecords_simpleMetrics";
+
+// ================== Google Sheet 雲端同步設定 ==================
+// 1) 建立一個新的 Google Sheet
+// 2) 上方選單 擴充功能 > Apps Script，貼上說明文件中提供的 Code.gs
+// 3) 部署 > New deployment > Web app，Execute as: Me，Who has access: Anyone
+// 4) 把部署後拿到的網址貼在下面 GAS_WEB_APP_URL 裡
+// 5) 把你的 Google Sheet 網址貼在 GAS_SHEET_URL（給「開啟 Google Sheet」按鈕用）
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeW2ifKOUl0txTsbAeaLvoZYdgddF5MrxeGvqUJfDcxkwqTNv4e-mRTvNupN93HkA4Dg/exec";
+const GAS_SHEET_URL = "https://docs.google.com/spreadsheets/d/1tT6tcakzvyCt6x5PstcFwHGUvnXvo6pj-fzJTGEee5M/edit?gid=0#gid=0";
+const CLOUD_SYNC_ENABLED = !GAS_WEB_APP_URL.startsWith("PASTE_");
+
+function showSyncBanner(kind, text) {
+  const el = document.getElementById("syncBanner");
+  if (!el) return;
+  el.className = "sync-banner sync-" + kind;
+  el.style.display = "block";
+  el.innerText = text;
+}
+
+function hideSyncBanner() {
+  const el = document.getElementById("syncBanner");
+  if (!el) return;
+  el.style.display = "none";
+}
+
+function openCloudSheet() {
+  if (!CLOUD_SYNC_ENABLED || GAS_SHEET_URL.startsWith("PASTE_")) {
+    alert("尚未設定 Google Sheet 網址，請先完成雲端同步設定。");
+    return;
+  }
+  window.open(GAS_SHEET_URL, "_blank");
+}
+
+async function downloadExcel() {
+  if (typeof XLSX === "undefined") {
+    alert("Excel 匯出元件尚未載入完成，請確認網路連線後再試一次。");
+    return;
+  }
+
+  showSyncBanner("loading", "正在從雲端取得最新資料以產生 Excel…");
+  if (CLOUD_SYNC_ENABLED) {
+    await pullCloudRecords();
+  }
+
+  const records = getRecords()
+    .filter(r => r.isCorrect === true)
+    .sort((a, b) => {
+      if (a.participantID !== b.participantID) return a.participantID.localeCompare(b.participantID);
+      return Number(a.trial) - Number(b.trial);
+    });
+
+  if (records.length === 0) {
+    hideSyncBanner();
+    alert("目前沒有任何已完成的紀錄可以匯出。");
+    return;
+  }
+
+  const rows = records.map(r => ({
+    "受試者編號": r.participantID,
+    "Trial順序": r.trial,
+    "SentenceID": r.sentenceID,
+    "完成日期時間": r.submittedAt ? formatDateTimeForDisplay(r.submittedAt) : "",
+    "花費時間(秒)": r.testTimeSec,
+    "WPM": r.wpm,
+    "按鍵次數": r.keystrokes,
+    "刪除鍵次數": r.backspaceCount,
+    "刪除鍵比例(%)": r.backspaceRate,
+    "Final Input": r.finalInput,
+    "Target Sentence": r.targetSentence
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  worksheet["!cols"] = [
+    { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 10 },
+    { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 50 }, { wch: 50 }
+  ];
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Records");
+
+  const stamp = new Date();
+  const filename = `typing_test_records_${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}_${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}.xlsx`;
+  XLSX.writeFile(workbook, filename);
+
+  showSyncBanner("ok", "Excel 已下載：" + filename);
+  setTimeout(hideSyncBanner, 3000);
+}
+
+async function postRecordToCloud(record) {
+  if (!CLOUD_SYNC_ENABLED) return;
+  try {
+    await fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(record)
+    });
+  } catch (err) {
+    console.warn("雲端同步失敗（已儲存在本機，稍後可按重新整理再試）", err);
+  }
+}
+
+async function postDeleteToCloud(pid, trial) {
+  if (!CLOUD_SYNC_ENABLED) return;
+  try {
+    await fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "delete", participantID: pid, trial: trial })
+    });
+  } catch (err) {
+    console.warn("雲端刪除同步失敗", err);
+  }
+}
+
+function cloudRowToRecord(row) {
+  return {
+    participantID: row.participantID,
+    trial: Number(row.trial),
+    sentenceID: row.sentenceID,
+    status: row.status || "Completed",
+    targetSentence: row.targetSentence,
+    finalInput: row.finalInput,
+    isCorrect: row.isCorrect === true || row.isCorrect === "true" || row.isCorrect === "TRUE",
+    testTimeSec: row.testTimeSec !== "" ? Number(row.testTimeSec) : 0,
+    wpm: row.wpm !== "" ? Number(row.wpm) : 0,
+    keystrokes: row.keystrokes !== "" ? Number(row.keystrokes) : 0,
+    backspaceCount: row.backspaceCount !== "" ? Number(row.backspaceCount) : 0,
+    backspaceRate: row.backspaceRate !== "" ? Number(row.backspaceRate) : 0,
+    submittedAt: row.submittedAt,
+    completedDate: row.completedDate,
+    keyLog: ""
+  };
+}
+
+async function pullCloudRecords() {
+  if (!CLOUD_SYNC_ENABLED) return false;
+  showSyncBanner("loading", "正在從 Google Sheet 同步最新資料…");
+  try {
+    const res = await fetch(GAS_WEB_APP_URL, { method: "GET" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    const records = rows.map(cloudRowToRecord).filter(r => r.participantID && r.trial);
+    setRecords(records);
+    showSyncBanner("ok", "已同步雲端最新資料（" + records.length + " 筆）");
+    setTimeout(hideSyncBanner, 2500);
+    return true;
+  } catch (err) {
+    console.warn("雲端同步讀取失敗，改用本機資料顯示", err);
+    showSyncBanner("err", "無法連線 Google Sheet，目前顯示本機暫存資料");
+    return false;
+  }
+}
+// ================== 雲端同步設定結束 ==================
+
+// ===== iPhone Safari 儲存空間修正版 =====
+// 正式實驗只保留統計值，不再把每一次按鍵的完整 keyLog 存入 localStorage，
+// 避免 iPhone 出現 The quota has been exceeded。
+function compactRecordForStorage(record) {
+  const copy = { ...record };
+  copy.keyLog = "";
+  return copy;
+}
+
+function cleanupOldHeavyKeyLogs() {
+  try {
+    const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    let changed = false;
+    const cleaned = records.map(r => {
+      if (r && r.keyLog && String(r.keyLog).length > 0) {
+        changed = true;
+        return { ...r, keyLog: "" };
+      }
+      return r;
+    });
+    if (changed) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    }
+  } catch (err) {
+    console.warn("cleanupOldHeavyKeyLogs failed", err);
+  }
+}
+
+cleanupOldHeavyKeyLogs();
+
+const input = document.getElementById("input");
+const result = document.getElementById("result");
+const targetText = document.getElementById("target");
+const trialInfo = document.getElementById("trialInfo");
+
+function fitToVisibleScreen() {
+  const phone = document.getElementById("phoneScreen");
+  if (!phone) return;
+  phone.style.height = window.visualViewport ? window.visualViewport.height + "px" : window.innerHeight + "px";
+}
+
+window.addEventListener("resize", fitToVisibleScreen);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", fitToVisibleScreen);
+  window.visualViewport.addEventListener("scroll", fitToVisibleScreen);
+}
+
+function resetTrialMetrics() {
+  trialStartTime = null;
+  trialEndTime = null;
+  keystrokeCount = 0;
+  backspaceCount = 0;
+  keyLog = [];
+  lastInputTime = null;
+  completionTime = null;
+}
+
+function markStartTime() {
+  if (trialStartTime === null) trialStartTime = performance.now();
+}
+
+function countKey(event) {
+  const k = event.key;
+  const isTypedKey = k.length === 1 || k === "Backspace" || k === "Delete";
+  if (!isTypedKey) return;
+
+  markStartTime();
+  keystrokeCount++;
+  if (k === "Backspace" || k === "Delete") backspaceCount++;
+
+  // 不再記錄完整逐鍵 keyLog，避免 iPhone Safari localStorage 容量爆掉。
+  // 若未來需要逐鍵時間資料，建議改用 Firebase / Google Sheet / 後端資料庫。
+}
+
+
+function startExperiment() {
+  cleanupOldHeavyKeyLogs();
+  participantID = document.getElementById("participantInput").value.trim().toUpperCase();
+  if (!assignment[participantID]) {
+    alert("找不到此受試者，請輸入 P01 到 P30");
+    return;
+  }
+  trialList = assignment[participantID];
+  currentTrialIndex = 0;
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("phoneScreen").style.display = "flex";
+  fitToVisibleScreen();
+  loadTrial();
+}
+
+function loadTrial() {
+  if (currentTrialIndex >= trialList.length) {
+    trialInfo.innerText = participantID + " 實驗完成";
+    targetText.innerText = "所有 36 個 trials 已完成";
+    result.style.display = "none";
+    input.disabled = true;
+    return;
+  }
+
+  currentSentenceID = trialList[currentTrialIndex];
+  currentSentence = sentenceBank[currentSentenceID];
+  trialInfo.innerText =
+    "Participant: " + participantID +
+    "｜Trial: " + (currentTrialIndex + 1) + " / 36" +
+    "｜SentenceID: " + currentSentenceID;
+
+  targetText.innerText = currentSentence;
+  input.value = "";
+  result.innerHTML = "";
+  result.style.display = "none";
+  result.classList.remove("is-correct", "is-wrong");
+  input.disabled = false;
+  resetTrialMetrics();
+  input.focus();
+}
+
+function escapeHTML(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+
+function normalizeTypingText(text) {
+  return String(text ?? "")
+    .replace(/\u00A0/g, " ")     // 不斷行空白轉一般空白
+    .replace(/\u3000/g, " ")     // 全形空白轉一般空白
+    .replace(/[\r\n]+/g, "")     // 移除手機可能產生的換行
+    .replace(/[\u200B-\u200D\uFEFF]/g, "") // 移除零寬隱藏字元
+    .trimEnd();                   // 移除句尾多餘空白
+}
+
+function showMismatchDebug(typed, target) {
+  let index = 0;
+  const maxLen = Math.max(typed.length, target.length);
+  while (index < maxLen && typed[index] === target[index]) index++;
+
+  const typedChar = typed[index] === undefined ? "少字" : typed[index];
+  const targetChar = target[index] === undefined ? "多字" : target[index];
+
+  alert(
+    "尚未完全相同，請修正後再送出。\n" +
+    "第一個不同位置：第 " + (index + 1) + " 個字元\n" +
+    "你輸入的是：" + typedChar + "\n" +
+    "目標應該是：" + targetChar
+  );
+}
+
+function renderTypingFeedback(text, showMissing = false) {
+  const prefixCorrect = currentSentence.startsWith(text);
+  result.classList.remove("is-correct", "is-wrong");
+
+  if (text.length === 0) {
+    result.innerHTML = "";
+    result.style.display = "none";
+    return;
+  }
+
+  if (prefixCorrect) {
+    result.classList.add("is-correct");
+    let html = `<span class="correct">${escapeHTML(text)}</span>`;
+    if (showMissing && currentSentence.length - text.length === 1) {
+      const missingChar = currentSentence[currentSentence.length - 1];
+      html += `<span class="yellow">${escapeHTML(missingChar)}</span>`;
+    }
+    result.innerHTML = html;
+  } else {
+    result.classList.add("is-wrong");
+    result.innerHTML = `<span class="wrong">${escapeHTML(text)}</span>`;
+  }
+  result.style.display = "block";
+}
+
+function computeWPM(testTimeSec) {
+  const minutes = testTimeSec / 60;
+  return minutes > 0 ? Number((((currentSentence.length / 5) / minutes).toFixed(2))) : 0;
+}
+
+function saveTrialRecord(finalInput, isCorrect) {
+  if (trialStartTime === null) trialStartTime = performance.now();
+
+  trialEndTime = completionTime || lastInputTime || performance.now();
+  const testTimeSec = Math.max(0, (trialEndTime - trialStartTime) / 1000);
+
+  const record = {
+    participantID,
+    trial: currentTrialIndex + 1,
+    sentenceID: currentSentenceID,
+    status: "Completed",
+    targetSentence: currentSentence,
+    finalInput,
+    isCorrect,
+    testTimeSec: Number(testTimeSec.toFixed(3)),
+    wpm: computeWPM(testTimeSec),
+    keystrokes: keystrokeCount,
+    backspaceCount,
+    backspaceRate: keystrokeCount > 0 ? Number(((backspaceCount / keystrokeCount) * 100).toFixed(2)) : 0,
+    submittedAt: new Date().toISOString(),
+    completedDate: formatDateForDisplay(new Date()),
+    keyLog: ""
+  };
+
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]").map(compactRecordForStorage);
+  const smallRecord = compactRecordForStorage(record);
+  const existingIndex = records.findIndex(r => r.participantID === smallRecord.participantID && Number(r.trial) === Number(smallRecord.trial));
+  if (existingIndex >= 0) records[existingIndex] = smallRecord;
+  else records.push(smallRecord);
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (err) {
+    cleanupOldHeavyKeyLogs();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records.map(compactRecordForStorage)));
+    } catch (err2) {
+      alert("儲存空間仍不足，請先到完成紀錄下載或清除舊紀錄後再繼續。錯誤：" + err2.message);
+      throw err2;
+    }
+  }
+
+  postRecordToCloud(smallRecord);
+
+  if (document.getElementById("resultScreen")?.style.display === "flex") refreshResultTable();
+}
+
+function normalizeTypingText(text) {
+  return String(text ?? "")
+    .replace(/\u00A0/g, " ")
+    .replace(/\u3000/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\r?\n/g, " ")
+    .replace(/[ \t]+$/g, "");
+}
+
+function getFirstDifferentIndex(a, b) {
+  const maxLen = Math.max(a.length, b.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (a[i] !== b[i]) return i;
+  }
+  return -1;
+}
+
+let submitLock = false;
+
+function submitText() {
+  if (submitLock) return;
+  submitLock = true;
+
+  try {
+    // 嚴格比對：輸入內容必須與目標句 100% 完全相同，才可以送出下一句。
+    // 不自動修正、不自動補字、不忽略大小寫、不忽略中間空白。
+    const rawText = input.value;
+    const commandText = rawText.trim();
+
+    const jumpMatch = commandText.match(/^G(\d{1,2})$/i);
+    if (jumpMatch) {
+      const jumpTrial = parseInt(jumpMatch[1], 10);
+      if (jumpTrial >= 1 && jumpTrial <= trialList.length) {
+        currentTrialIndex = jumpTrial - 1;
+        submitLock = false;
+        loadTrial();
+      } else {
+        alert("請輸入 G01 到 G36");
+        submitLock = false;
+      }
+      return;
+    }
+
+    renderTypingFeedback(rawText, true);
+
+    if (rawText === currentSentence) {
+      saveTrialRecord(rawText, true);
+      currentTrialIndex++;
+      setTimeout(function () {
+        submitLock = false;
+        loadTrial();
+      }, 500);
+    } else {
+      const diffIndex = getFirstDifferentIndex(rawText, currentSentence);
+      const typedChar = diffIndex >= 0 && rawText[diffIndex] !== undefined ? rawText[diffIndex] : "少字";
+      const targetChar = diffIndex >= 0 && currentSentence[diffIndex] !== undefined ? currentSentence[diffIndex] : "多字";
+      alert(
+        "內容必須與目標句完全一致才能送出。\n" +
+        "目前輸入字元數：" + rawText.length + "\n" +
+        "目標句字元數：" + currentSentence.length + "\n" +
+        "第一個不同位置：第 " + (diffIndex + 1) + " 個字元\n" +
+        "你輸入的是：" + typedChar + "\n" +
+        "目標應該是：" + targetChar
+      );
+      submitLock = false;
+    }
+  } catch (err) {
+    alert("送出時發生錯誤：" + err.message);
+    submitLock = false;
+  }
+}
+
+function updateResult() {
+  const text = input.value;
+
+  if (trialStartTime === null && text.length > 0) {
+    trialStartTime = performance.now();
+  }
+
+  if (text.length > 0) {
+    lastInputTime = performance.now();
+  }
+
+  if (text === currentSentence && completionTime === null) {
+    completionTime = lastInputTime || performance.now();
+  }
+
+  renderTypingFeedback(text, false);
+  document.querySelector(".chat").scrollTop = 0;
+}
+
+input.addEventListener("keydown", countKey);
+input.addEventListener("input", updateResult);
+input.addEventListener("focus", function () {
+  setTimeout(function () {
+    fitToVisibleScreen();
+    document.querySelector(".chat").scrollTop = 0;
+  }, 300);
+});
+input.addEventListener("blur", function () { setTimeout(fitToVisibleScreen, 300); });
+input.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    submitText();
+  }
+});
+
+document.getElementById("participantInput").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    startExperiment();
+  }
+});
+
+
+function getRecords() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
+
+function setRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"]/g, function(s) {
+    return {"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;"}[s];
+  });
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toLocalDateTimeValue(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function formatDateTimeForDisplay(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}年${pad2(d.getMonth() + 1)}月${pad2(d.getDate())}日 ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function formatDateForDisplay(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}年${pad2(d.getMonth() + 1)}月${pad2(d.getDate())}日`;
+}
+
+function normalizeParticipantID(pid) {
+  return String(pid || "").trim().toUpperCase();
+}
+
+function getSentenceIDByTrial(pid, trialOrder) {
+  const list = assignment[pid] || [];
+  return list[Number(trialOrder) - 1] || "";
+}
+
+function makeRecordKey(pid, trial) {
+  return `${pid}__${Number(trial)}`;
+}
+
+function getLatestRecordMap(records = getRecords()) {
+  const map = new Map();
+  records.forEach(r => {
+    if (r.isCorrect === true) map.set(makeRecordKey(r.participantID, r.trial), r);
+  });
+  return map;
+}
+
+function upsertRecord(record) {
+  const records = getRecords().map(compactRecordForStorage);
+  const smallRecord = compactRecordForStorage(record);
+  const idx = records.findIndex(r => makeRecordKey(r.participantID, r.trial) === makeRecordKey(smallRecord.participantID, smallRecord.trial));
+  if (idx >= 0) records[idx] = smallRecord;
+  else records.push(smallRecord);
+  try {
+    setRecords(records);
+  } catch (err) {
+    cleanupOldHeavyKeyLogs();
+    setRecords(records.map(compactRecordForStorage));
+  }
+  postRecordToCloud(smallRecord);
+}
+
+
+async function showResultsPage() {
+  cleanupOldHeavyKeyLogs();
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("phoneScreen").style.display = "none";
+  document.getElementById("participantDetailScreen").style.display = "none";
+  document.getElementById("resultScreen").style.display = "flex";
+  updateParticipantFilter();
+  await refreshResultTable();
+}
+
+function backToParticipantSelect() {
+  participantID = "";
+  trialList = [];
+  currentTrialIndex = 0;
+  document.getElementById("participantInput").value = "";
+  document.getElementById("startScreen").style.display = "flex";
+  document.getElementById("phoneScreen").style.display = "none";
+  document.getElementById("resultScreen").style.display = "none";
+  document.getElementById("participantDetailScreen").style.display = "none";
+}
+
+function backToTypingPage() {
+  document.getElementById("resultScreen").style.display = "none";
+  document.getElementById("participantDetailScreen").style.display = "none";
+  if (participantID && trialList.length > 0) {
+    document.getElementById("phoneScreen").style.display = "flex";
+    input.focus();
+  } else {
+    document.getElementById("startScreen").style.display = "flex";
+  }
+}
+
+function updateParticipantFilter() {
+  const select = document.getElementById("participantFilter");
+  const current = select.value || "ALL";
+  select.innerHTML = '<option value="ALL">請選擇受試者</option>' +
+    Object.keys(assignment).sort().map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join("\n");
+
+  if (Object.keys(assignment).includes(current)) select.value = current;
+  else if (participantID && Object.keys(assignment).includes(participantID)) select.value = participantID;
+  else select.value = "ALL";
+}
+
+function openSelectedParticipant() {
+  const selected = document.getElementById("participantFilter").value;
+  if (selected !== "ALL") showParticipantDetail(selected);
+}
+
+async function refreshResultTable() {
+  await pullCloudRecords();
+  updateParticipantFilter();
+  refreshProgressGrid();
+  const records = getRecords().filter(r => r.isCorrect === true);
+  const participantCount = new Set(records.map(r => r.participantID)).size;
+  document.getElementById("resultSummary").innerHTML = `
+    已有紀錄受試者數：<b>${participantCount}</b><br>
+    請點選下方受試者卡片，進入該受試者 36 句詳細頁進行新增／修改／刪除。
+  `;
+}
+
+function refreshProgressGrid() {
+  const records = getRecords().filter(r => r.isCorrect === true);
+  const map = new Map();
+  Object.keys(assignment).forEach(pid => map.set(pid, new Set()));
+  records.forEach(r => {
+    if (!map.has(r.participantID)) map.set(r.participantID, new Set());
+    map.get(r.participantID).add(Number(r.trial));
+  });
+
+  const grid = document.getElementById("progressGrid");
+  grid.innerHTML = Object.keys(assignment).sort().map(pid => {
+    const count = map.get(pid)?.size || 0;
+    const done = count >= 36 ? "✅" : "";
+    return `<button class="progress-card" onclick="showParticipantDetail('${esc(pid)}')" type="button" style="border:none;text-align:left;color:black;background:white;">
+      <b>${esc(pid)}</b> ${done}<br>${count} / 36
+    </button>`;
+  }).join("\n");
+}
+
+async function showParticipantDetail(pid) {
+  pid = normalizeParticipantID(pid);
+  if (!assignment[pid]) {
+    alert("找不到此受試者");
+    return;
+  }
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("phoneScreen").style.display = "none";
+  document.getElementById("resultScreen").style.display = "none";
+  document.getElementById("participantDetailScreen").style.display = "flex";
+  await pullCloudRecords();
+  renderParticipantDetail(pid);
+}
+
+function renderParticipantDetail(pid) {
+  const map = getLatestRecordMap();
+  const rows = (assignment[pid] || []).map((sid, idx) => {
+    const trial = idx + 1;
+    const saved = map.get(makeRecordKey(pid, trial));
+    const target = sentenceBank[sid] || "";
+    return {
+      participantID: pid,
+      trial,
+      sentenceID: sid,
+      targetSentence: saved?.targetSentence || target,
+      finalInput: saved?.finalInput || "",
+      submittedAt: saved?.submittedAt || "",
+      isCompleted: !!saved
+    };
+  });
+
+  const completedCount = rows.filter(r => r.isCompleted).length;
+  document.getElementById("participantDetailTitle").innerText = `${pid} Completion Detail`;
+  document.getElementById("participantDetailSummary").innerHTML = `
+    <b>${esc(pid)}</b> 完成進度：<b>${completedCount} / 36</b><br>
+    每一列代表一個 Trial Order；可在旁邊新增、修改完成日期時間，或刪除該句紀錄。
+  `;
+
+  const tbody = document.querySelector("#participantDetailTable tbody");
+  tbody.innerHTML = rows.map(r => {
+    const key = `${esc(r.participantID)}__${esc(r.trial)}`;
+    const dtValue = r.submittedAt ? toLocalDateTimeValue(r.submittedAt) : toLocalDateTimeValue(new Date());
+    const status = r.isCompleted
+      ? '<span class="status-done">Completed</span>'
+      : '<span class="status-pending">Pending</span>';
+    const actionLabel = r.isCompleted ? "儲存修改" : "新增紀錄";
+    const deleteButton = r.isCompleted
+      ? `<button class="danger" onclick="deleteOneRecord('${esc(r.participantID)}', ${Number(r.trial)}, true)" type="button">刪除此句</button>`
+      : `<button class="danger" disabled type="button" style="opacity:.45;">尚無紀錄</button>`;
+
+    return `
+      <tr>
+        <td>${esc(r.trial)}</td>
+        <td>${esc(r.sentenceID)}</td>
+        <td>${status}</td>
+        <td><input class="edit-input edit-datetime" type="datetime-local" id="dt_${key}" value="${esc(dtValue)}"></td>
+        <td>${esc(r.finalInput)}</td>
+        <td>${esc(r.targetSentence)}</td>
+        <td class="row-actions">
+          <button class="secondary" onclick="saveParticipantTrialRecord('${esc(r.participantID)}', ${Number(r.trial)})" type="button">${actionLabel}</button>
+          ${deleteButton}
+        </td>
+      </tr>`;
+  }).join("\n");
+}
+
+function saveParticipantTrialRecord(pid, trial) {
+  pid = normalizeParticipantID(pid);
+  const sid = getSentenceIDByTrial(pid, trial);
+  const targetSentence = sentenceBank[sid] || "";
+  const key = `${pid}__${Number(trial)}`;
+  const dtValue = document.getElementById(`dt_${key}`).value;
+  const dateObj = dtValue ? new Date(dtValue) : new Date();
+
+  if (!assignment[pid]) return alert("受試者編號錯誤");
+  if (!(Number(trial) >= 1 && Number(trial) <= 36)) return alert("Trial Order 錯誤");
+  if (!sid || !targetSentence) return alert("找不到對應句子");
+
+  const old = getLatestRecordMap().get(makeRecordKey(pid, trial));
+  const record = {
+    ...(old || {}),
+    participantID: pid,
+    trial: Number(trial),
+    sentenceID: sid,
+    status: "Completed",
+    targetSentence,
+    finalInput: old?.finalInput || targetSentence,
+    isCorrect: true,
+    submittedAt: dateObj.toISOString(),
+    completedDate: formatDateForDisplay(dateObj),
+    keyLog: ""
+  };
+
+  upsertRecord(record);
+  renderParticipantDetail(pid);
+  refreshProgressGrid();
+  alert(`${pid} Trial ${trial} 已新增／更新，並同步至雲端`);
+}
+
+function deleteOneRecord(pid, trial, stayOnDetail = false) {
+  if (!confirm(`確定刪除 ${pid} Trial ${trial} 這一句紀錄嗎？`)) return;
+  const records = getRecords().filter(r => !(r.participantID === pid && Number(r.trial) === Number(trial)));
+  setRecords(records);
+  postDeleteToCloud(pid, trial);
+  if (stayOnDetail) renderParticipantDetail(pid);
+  else refreshResultTable();
+}
+
+function clearCurrentParticipantData() {
+  const selected = document.getElementById("participantFilter").value;
+  if (selected === "ALL") {
+    alert("請先選擇單一受試者，再清除該受試者資料。若要清除全部，請按『清除全部紀錄』。");
+    return;
+  }
+  if (confirm(`確定要清除 ${selected} 的所有完成紀錄嗎？`)) {
+    setRecords(getRecords().filter(r => r.participantID !== selected));
+    updateParticipantFilter();
+    refreshResultTable();
+  }
+}
+
+function clearAllData() {
+  if (confirm("確定要清除全部完成紀錄嗎？（注意：這只會清除本機畫面顯示，Google Sheet 上的資料不會被刪除，如需清空請直接到 Google Sheet 手動刪除列）")) {
+    localStorage.removeItem(STORAGE_KEY);
+    updateParticipantFilter();
+    refreshResultTable();
+  }
+}
+</script>
+</body>
+</html>
