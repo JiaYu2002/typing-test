@@ -902,7 +902,7 @@ function saveTrialRecord(finalInput, isCorrect) {
     keystrokes: keystrokeCount,
     backspaceCount,
     backspaceRate: keystrokeCount > 0 ? Number(((backspaceCount / keystrokeCount) * 100).toFixed(2)) : 0,
-    submittedAt: new Date().toISOString(),
+    submittedAt: formatLocalTimestamp(new Date()),
     completedDate: formatDateForDisplay(new Date()),
     keyLog: ""
   };
@@ -1061,6 +1061,13 @@ function esc(v) {
 
 function pad2(n) {
   return String(n).padStart(2, "0");
+}
+
+// 用裝置本機時間（台灣使用者即為台灣時間）產生時間字串，不使用 toISOString()
+// 是因為 toISOString() 會轉成 UTC，畫面上看到的時間會比實際慢 8 小時。
+function formatLocalTimestamp(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
 function toLocalDateTimeValue(dateInput) {
@@ -1285,7 +1292,7 @@ function saveParticipantTrialRecord(pid, trial) {
     targetSentence,
     finalInput: old?.finalInput || targetSentence,
     isCorrect: true,
-    submittedAt: dateObj.toISOString(),
+    submittedAt: formatLocalTimestamp(dateObj),
     completedDate: formatDateForDisplay(dateObj),
     keyLog: ""
   };
